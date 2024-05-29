@@ -1,27 +1,30 @@
 <?php
 
+// app/Http/Controllers/AuthController.php
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    //
-    public function login(Request $request){
-        $credentials = $request->only('email', 'password');
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            $token = $user->createToken('Personal Access Token')->plainTextToken;
+        $user = User::where('email', $request->email)->first();
 
-            return response()->json([
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-            ]);
+        if ($user && Hash::check($request->password, $user->password)) {
+            $token = $user->createToken('auth_token')->plainTextToken;
+            return response()->json(['access_token' => $token, 'token_type' => 'Bearer']);
         }
 
-        return response()->json(['message' => 'Unauthorized'], 401);
+        return response()->json(['message' => 'Invalid login details'], 401);
     }
-
 }
+

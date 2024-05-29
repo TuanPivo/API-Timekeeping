@@ -19,23 +19,29 @@ class AttendanceController extends Controller
     }
     
     // check in và check out
-    public function attendance($type)
+    public function attendance( $type)
     {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         $isCheckIn = $type === 'checkIn';
 
-        $userId = Auth::id();
         $attendance = [
-            'user_id' => $userId,
+            'user_id' => $user->id,
             'date' => now()->toDateString(),
         ];
         if($isCheckIn){
             $attendance['check_in'] = now();
+            $message = 'check in success';
         }else{
             $attendance['check_out'] = now();
+            $message = 'check out success';
         }
         Attendance::create($attendance);
 
-        return response()->json(['message' => 'Check in success'], 200);
+        return response()->json(['message' => $message], 200);
     }
 
 }
